@@ -92,20 +92,22 @@ fn open_flink() {
 
 #[test]
 fn share_data() {
-    let s1 = ShmemConf::new()
-        .size(core::mem::size_of::<u32>())
-        .create()
-        .unwrap();
+    let u32_size = core::mem::size_of::<u32>();
+    let s1 = ShmemConf::new().size(u32_size).create().unwrap();
 
     // Open with the unique os id
     let os_id = s1.get_os_id().to_string();
-    let s2 = ShmemConf::new().os_id(os_id).open().unwrap();
+    let s2 = ShmemConf::new().size(u32_size).os_id(os_id).open().unwrap();
 
     let ptr1 = s1.as_ptr() as *mut u32;
     let ptr2 = s2.as_ptr() as *mut u32;
 
     // Confirm that the two pointers are different
     assert_ne!(ptr1, ptr2);
+
+    // Assert both Shmems agree on the size of the buffer
+    assert_eq!(s1.len(), s2.len());
+    assert_eq!(s1.len(), u32_size);
 
     // Write a value from s1 and read it from s2
     unsafe {
